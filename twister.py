@@ -341,14 +341,84 @@ def face0_towards(direction: Direction) -> Orientation:
     else:
         raise ValueError(f"Invalid direction: {direction}")
 
+def reverse_order(locs: list[Location]) -> list[Location]:
+    """Return a new list with the locations in reverse order."""
+    return list(reversed(locs))
+
+def mirror_xyz(locs: list[Location]) -> list[Location]:
+    """Return a new list with the locations mirrored along the x, y, and z axes."""
+    return [Location(2 - loc.x, 2 - loc.y, 2 - loc.z) for loc in locs]
+
 def dfs(cube_index: int):
     """Depth-first search to place cube `cube_index` in the grid."""
 
     assert 0 < cube_index <= 27
     if cube_index == 27:
         print("Found a solution!")
-        for i in range(27):
-            print(f"Cube {i}: {LOCATIONS[i]}, {ORIENTATIONS[i]}")
+        for i, loc in enumerate(LOCATIONS):
+            print(f"Cube {i:2d}: {loc}")
+            if i + 1 >= len(LOCATIONS):
+                continue
+            next_loc = LOCATIONS[i + 1]
+            print("          ", end="")
+            print("|" if loc.x != next_loc.x else " ", end="")
+            print("  ", end="")
+            print("|" if loc.y != next_loc.y else " ", end="")
+            print("  ", end="")
+            print("|" if loc.z != next_loc.z else " ")
+
+        # It's easier to move the cubes in the reverse order.
+        locs = mirror_xyz(reverse_order(LOCATIONS))
+        for i, loc in enumerate(locs[:-1]):
+            next_loc = locs[i + 1]
+            level = ".." if loc.z == 0 else "--" if loc.z == 1 else "=="
+            if next_loc.x > loc.x:
+                print(f"{level}> ", end="")
+            elif next_loc.x < loc.x:
+                print(f"<{level} ", end="")
+            elif next_loc.y > loc.y:
+                print(f"{level}^ ", end="")
+            elif next_loc.y < loc.y:
+                print(f"{level}v ", end="")
+            elif next_loc.z > loc.z:
+                print(f"(.) ", end="")
+            else:
+                print(f"(*) ", end="")
+            if i % 5 == 4:
+                print()
+        print()
+
+        print("""
+------------------
+
+              
+
+
+              
+  <2> - (v)
+------------------
+        (1) > (1)
+         |     |
+        (1)   (1)
+         |     |
+        <1>   (^)
+-----------------
+              
+
+  (v) - (2) - (2)
+               |
+              <2>
+-----------------
+  (^) - (0) - (0)        
+               |
+  <0> - (0)   (0)
+         |     |
+        (0) - (0)
+-----------------
+  <2> - (2) - (2)
+
+              """)
+
         return True
 
     # Get the connection faces for the current cube.
