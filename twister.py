@@ -42,7 +42,6 @@
 from typing import Optional
 
 
-
 class Location:
     """Represents a location in 3D space."""
 
@@ -279,38 +278,38 @@ class Orientation:
     def __str__(self) -> str:
         return f"Orientation(neg_x={self.neg_x_face}, neg_y={self.neg_y_face}, neg_z={self.neg_z_face})"
 
+
 # This list of 27 elements represents the connections between the 27 cubes.
-# The i-th element is a tuple (a,b) where a is the face of cube i that is
-# connected to cube i-1, and b is the face of cube i that is connected to
-# cube i+1. For cube 0, a is None. For cube 26, b is None.
-FACES_TO_NEIGHBORS: list[tuple[Optional[Face], Optional[Face]]] = [
-    (None, Face(3)),  # Cube 0 is connected to cube 1 via face 3
-    (Face(0), Face(3)),  # Cube 1 is connected to cube 0 via face 0 and cube 2 via face 3
-    (Face(0), Face(1)),  # Cube 2 is connected to cube 1 via face 0 and cube 3 via face 1
-    (Face(0), Face(3)),  # Cube 3 is connected to cube 2 via face 0 and cube 4 via face 3
-    (Face(0), Face(1)),  # Cube 4 is connected to cube 3 via face 0 and cube 5 via face 1
-    (Face(0), Face(3)),  # Cube 5 is connected to cube 4 via face 0 and cube 6 via face 3
-    (Face(0), Face(1)),  # Cube 6 is connected to cube 5 via face 0 and cube 7 via face 1
-    (Face(0), Face(3)),  # Cube 7 is connected to cube 6 via face 2 and cube 8 via face 1
-    (Face(0), Face(1)),  # Cube 8 is connected to cube 7 via face 2 and cube 9 via face 1
-    (Face(0), Face(1)),  # Cube 9 is connected to cube 8 via face 2 and cube10 via face1
-    (Face(0), Face(1)),  # Cube10 is connected to cube 9 via face 2 and cube11 via face5
-    (Face(0), Face(1)),  # Cube11 is connected to cube10 via face 4 and cube12 via face5
-    (Face(0), Face(3)),  # Cube12 is connected to cube11 via face 4 and cube13 via face5
-    (Face(0), Face(1)),  # Cube13 is connected to cube12 via face 4 and cube14 via face5
-    (Face(0), Face(3)),  # Cube14 is connected to cube13 via face 4 and cube15 via face5
-    (Face(0), Face(1)),  # Cube15 is connected to cube14 via face 4 and cube16 via face1
-    (Face(0), Face(1)),  # Cube16 is connected to cube15 via face 2 and cube17 via face1
-    (Face(0), Face(1)),  # Cube17 is connected to cube16 via face 2 and cube18 via face1
-    (Face(0), Face(3)),  # Cube18 is connected to cube17 via face 2 and cube19 via face1
-    (Face(0), Face(1)),  # Cube19 is connected to cube18 via face 2 and cube20 via face1
-    (Face(0), Face(1)),  # Cube20 is connected to cube19 via face 2 and cube21 via face3
-    (Face(0), Face(3)),  # Cube21 is connected to cube20 via face 0 and cube22 via face3
-    (Face(0), Face(1)),  # Cube22 is connected to cube21 via face 0 and cube23 via face3
-    (Face(0), Face(1)),  # Cube23 is connected to cube22 via face 0 and cube24 via face3
-    (Face(0), Face(1)),  # Cube24 is connected to cube23 via face 0 and cube25 via face3
-    (Face(0), Face(3)),  # Cube25 is connected to cube24 via face 0 and cube26 via face3
-    (Face(0), None),  # Cube25 is connected to cube24 via face 0
+# The i-th element is the face of cube i that is connected to cube i+1.
+# For cube 26, the element is None since it has no next cube.
+FACE_TO_NEXT: list[Optional[Face]] = [
+    Face(3),
+    Face(3),
+    Face(1),
+    Face(3),
+    Face(1),
+    Face(3),
+    Face(1),
+    Face(3),
+    Face(1),
+    Face(1),
+    Face(1),
+    Face(1),
+    Face(3),
+    Face(1),
+    Face(3),
+    Face(1),
+    Face(1),
+    Face(1),
+    Face(3),
+    Face(1),
+    Face(1),
+    Face(3),
+    Face(1),
+    Face(1),
+    Face(1),
+    Face(3),
+    None,
 ]
 
 
@@ -323,7 +322,7 @@ ORIENTATIONS: list[Orientation] = []
 
 def face0_towards(direction: Direction) -> Orientation:
     """Return an orientation where face 0 points towards the given direction.
-    
+
     The other two faces (neg_y and neg_z) can be chosen arbitrarily.
     """
     if direction == Direction(-1, 0, 0):
@@ -341,13 +340,16 @@ def face0_towards(direction: Direction) -> Orientation:
     else:
         raise ValueError(f"Invalid direction: {direction}")
 
+
 def reverse_order(locs: list[Location]) -> list[Location]:
     """Return a new list with the locations in reverse order."""
     return list(reversed(locs))
 
+
 def mirror_xyz(locs: list[Location]) -> list[Location]:
     """Return a new list with the locations mirrored along the x, y, and z axes."""
     return [Location(2 - loc.x, 2 - loc.y, 2 - loc.z) for loc in locs]
+
 
 def dfs(cube_index: int):
     """Depth-first search to place cube `cube_index` in the grid."""
@@ -355,11 +357,15 @@ def dfs(cube_index: int):
     assert 0 < cube_index <= 27
     if cube_index == 27:
         print("Found a solution!")
-        for i, loc in enumerate(LOCATIONS):
+
+        # It's easier to move the cubes in the reverse order.
+        locs = mirror_xyz(reverse_order(LOCATIONS))
+
+        for i, loc in enumerate(locs):
             print(f"Cube {i:2d}: {loc}")
-            if i + 1 >= len(LOCATIONS):
+            if i + 1 >= len(locs):
                 continue
-            next_loc = LOCATIONS[i + 1]
+            next_loc = locs[i + 1]
             print("          ", end="")
             print("|" if loc.x != next_loc.x else " ", end="")
             print("  ", end="")
@@ -367,8 +373,6 @@ def dfs(cube_index: int):
             print("  ", end="")
             print("|" if loc.z != next_loc.z else " ")
 
-        # It's easier to move the cubes in the reverse order.
-        locs = mirror_xyz(reverse_order(LOCATIONS))
         for i, loc in enumerate(locs[:-1]):
             next_loc = locs[i + 1]
             level = ".." if loc.z == 0 else "--" if loc.z == 1 else "=="
@@ -388,7 +392,8 @@ def dfs(cube_index: int):
                 print()
         print()
 
-        print("""
+        print(
+            """
 ------------------
 
               
@@ -417,21 +422,20 @@ def dfs(cube_index: int):
 -----------------
   <2> - (2) - (2)
 
-              """)
+              """
+        )
 
         return True
 
     # Get the connection faces for the current cube.
-    face_to_prev, face_to_next = FACES_TO_NEIGHBORS[cube_index]
-    assert face_to_prev == Face(0)  # We always connect to the previous cube via face 0.
-    # TODO: don't store face_to_prev in FACES_TO_NEIGHBORS, since it's always face 0.
+    face_to_next = FACE_TO_NEXT[cube_index]
 
     # Get the location and orientation of the previous cube.
     prev_location = LOCATIONS[cube_index - 1]
     prev_orientation = ORIENTATIONS[cube_index - 1]
 
     # The face of the previous cube that connects to the current cube.
-    prev_face_to_curr = FACES_TO_NEIGHBORS[cube_index - 1][1]
+    prev_face_to_curr = FACE_TO_NEXT[cube_index - 1]
     assert prev_face_to_curr is not None
 
     # Determine the location of the current cube based on the previous cube's location,
@@ -456,9 +460,9 @@ def dfs(cube_index: int):
     # in that case.
     orientation = face0_towards(reverse_direction)
     orientations = [orientation]
-    if face_to_next is not None and not face_to_prev.is_opposite(face_to_next):
+    if face_to_next is not None and not face_to_next == Face(3):
         for _ in range(3):
-            orientation = orientation.right_hand_rotate(face_to_prev)
+            orientation = orientation.right_hand_rotate(Face(0))
             orientations.append(orientation)
     # Place the current cube in the grid.
     LOCATIONS.append(curr_location)
